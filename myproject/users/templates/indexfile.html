@@ -1,0 +1,11 @@
+
+<html>
+    <body>
+        <h1>Users List:</h1>
+        <ul>
+            {% for u in users %}
+                <li>{{ u.get_fullname }}</li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
