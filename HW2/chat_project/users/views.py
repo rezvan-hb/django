@@ -62,7 +62,7 @@ def user_list(request):
     
     if request.method == 'GET':
     # return HttpResponse( render(request,'chat.html') )
-        return render(request,'chat.html', 
+        return render(request,'chathtml.html', 
         {
             "contacts" :contacts,
             "transfering" :transfering

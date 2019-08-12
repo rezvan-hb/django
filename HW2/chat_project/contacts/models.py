@@ -1,8 +1,4 @@
 from django.db import models
-
-# Create your models here.
-
-from django.db import models
 from django.core.validators import RegexValidator
 
 # Create your models here.
@@ -86,3 +82,4 @@ class Messages(models.Model):
             self.conversation_id.name,
             self.text
         )
+
