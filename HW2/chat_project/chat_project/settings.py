@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'users',
     'chat_project',
     'contacts', 
-    'users1' 
- ]
+    'users1', 
+    'chat' ]
 
 
 MIDDLEWARE = [

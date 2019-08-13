@@ -18,10 +18,13 @@ class SignupItem(APIView):
     def post(self, request):
         serializer = SignupSerializer(data = request.POST )
         if serializer.is_valid():
-            r
+            u = serializer.save()     # Users objects
+            return Response({
+                'message':'your account have been created successfuly!',
+                'data':serializer.data
+                })
         return Response(
             serializer.errors)    
-
 
 class LoginItem(APIView):
     def post(self, request):
