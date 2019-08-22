@@ -1,10 +1,10 @@
 
 from django.db import models
-from users1.models import Users
+from django.contrib.auth.models import User
 
 class Conversations(models.Model):
     name = models.CharField(max_length=100)
-    members = models.ManyToManyField(Users)
+    members = models.ManyToManyField(User)
     is_group = models.BooleanField()
 
     def __str__(self):
@@ -12,7 +12,7 @@ class Conversations(models.Model):
 
 class Messages(models.Model):
     sender_id = models.ForeignKey(
-        Users,
+        User,
         on_delete=models.CASCADE)
     conversation_id = models.ForeignKey(
         Conversations,
