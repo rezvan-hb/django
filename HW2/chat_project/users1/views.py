@@ -1,7 +1,7 @@
 
 from django.contrib.auth.models import User 
-from users1.models import Users , UserProfile
-from users1.serializer import UsersSerializer, RequestGetSerializer , LoginSerializer , SignupSerializer, EditProfile ,ListUsers
+from users1.models import UserProfile , Verify_email
+from users1.serializer import UsersSerializer, RequestGetSerializer , LoginSerializer , SignupSerializer, EditProfile ,ListUsers 
 
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login
@@ -12,19 +12,33 @@ from rest_framework import status
 
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
-
+from users1.models import Verify_email
 from chat_project.utiels import CsrfExemptSessionAuthentication
 from rest_framework.authentication import BaseAuthentication
+from chat_project import celery
+from users1.serializer import send_email
+import uuid
 
 class SignupItem(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication , 
         BaseAuthentication )
     
     def post(self, request):
-        serializer = SignupSerializer(data = request.POST )
+        
+        serializer = SignupSerializer(data = request.POST)
 
         if serializer.is_valid():
+            verify_token = uuid.uuid4()
             user_save = serializer.save()     # User objects
+            verify_email = Verify_email(
+                user = user_save,
+                email_verified = False, 
+                verify_token = verify_token
+            )
+            verify_email.save()
+            context = {'verify_token':verify_token}
+            send_email(serializer.data,context)
+
             return Response({
                 'message':'your account have been created successfuly!',
                 "success": "Dear {} welcome.".format(user_save.username),
@@ -32,6 +46,25 @@ class SignupItem(APIView):
                 }, status = status.HTTP_200_OK)
 
         return Response(serializer.errors , status = status.HTTP_400_BAD_REQUEST)  
+
+class EmailVerification(APIView):
+    def get(self, request, userparameter):
+        print('userparam:', type(userparameter))
+        uuid_parameter = uuid.UUID(userparameter)
+        print('userparam:', type(uuid_parameter))
+        
+        instance = Verify_email.objects.filter(verify_token = userparameter)[0]
+        instance.email_verified = True
+        instance.save()
+        print(instance)
+
+        return Response(
+            {
+            'message':'your account have been verified successfuly!',
+            }, 
+            status = status.HTTP_200_OK
+        )
+
 
 class LoginItem(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication ,BaseAuthentication )
@@ -43,14 +76,20 @@ class LoginItem(APIView):
             password = request.POST['password']
 
             user = authenticate(username = username, password = password)
+            
             print('user:', user)
             if user is not None:
                 if user.is_active:
-                    login(request, user)
-            
-                    return Response({
-                            'message': 'You have successfully logged in.'
-                            }, status = status.HTTP_200_OK)
+                    if Verify_email.objects.get(user = user).email_verified :
+                        login(request, user)
+                
+                        return Response({
+                                'message': 'Your email has not been verified'
+                                }, status = status.HTTP_403_FORBIDDEN)
+                    else:
+                        return Response({
+                                'message': 'You have successfully logged in.'
+                                }, status = status.HTTP_200_OK)
                 else:
                     return Response(status=status.HTTP_404_NOT_FOUND)
             else:
@@ -67,12 +106,12 @@ class EditProfileItem(APIView):
         '''
         edit profile
         '''
-        Userp = UserProfile.objects.get(token = request.data['token'])
-        serializer = EditProfile( instance = Userp.user , data = request.data)
-        
+        userp = request.user
+        serializer = EditProfile( 
+            instance = userp , data = request.data)
+
         if serializer.is_valid():
             print('serializer.data:', serializer.validated_data)
-            print('token:', serializer.validated_data['token'])
             serializer.save()
             return  Response({'message':'edit profile successfully!'}, status = status.HTTP_200_OK)
         else:
@@ -88,7 +127,7 @@ class EditProfileItem(APIView):
             status = status.HTTP_200_OK)
 
 # /////////////////////////////////////////////////////////////////////////////////////
-
+ 
 class ListUsersItem(APIView):
     def get(self, request):
         """

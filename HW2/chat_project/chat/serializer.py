@@ -68,7 +68,7 @@ class Editmessage(serializers.Serializer):
         try:
             message = Messages.objects.get(id = data['message_id'])
         except objectDoesNotExist:
-            raise serializers.ValidationError('token is wrong!')
+            raise serializers.ValidationError('message id is wrong!')
         return data
     
     def update(self, instance, valid_data ):

@@ -22,7 +22,6 @@ from chat_project.utiels import CsrfExemptSessionAuthentication
 from rest_framework.authentication import BaseAuthentication
 
 # # Response
-
 class ConversationItem(APIView):
     authentication_classes = (CsrfExemptSessionAuthentication , 
         BaseAuthentication )

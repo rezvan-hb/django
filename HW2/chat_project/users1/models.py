@@ -23,3 +23,9 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
+
+class Verify_email(models.Model):
+    
+    user = models.ForeignKey(User, on_delete = models.PROTECT , editable=True)
+    email_verified = models.BooleanField(null = False)
+    verify_token = models.UUIDField(primary_key = True, default = uuid.uuid4, editable = False)
